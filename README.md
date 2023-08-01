@@ -8,4 +8,5 @@ but have some additional features like:
 4. added sensor of filament ending
 5. deleted PID parameters configuration
 6. added counting length of filament maked (cm)
-7. and others
+7. forward motor steps = 1/16 and revers = 1/1
+8. and others
