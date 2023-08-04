@@ -72,7 +72,7 @@ long cm = 0;
 long last_cm = -1;
 #define steps_in_cm 1357
 
-GyverPID regulator(1, 1, 1, 10);
+GyverPID regulator(1, 1, 1.5, 10);
 
 void setup() {
   pinMode(EN_pin, OUTPUT);//пин управления вкл-вікл мотор
@@ -158,8 +158,8 @@ void loop() {
       filament_ended_time = 0;
     }
 
-    if ((filament_ended_time == 0) || (Time - filament_ended_time < 42000)) {
-      filament_ended = 0; //говорим, что пока лента не закончилась в течении 40 сек после его реального окончания, чтобі хвостик проплавило больше
+    if ((filament_ended_time == 0) || (Time - filament_ended_time < 43000)) {
+      filament_ended = 0; //говорим, что пока лента не закончилась в течении 43 сек после его реального окончания, чтобі хвостик проплавило больше
     }
   }
   
