@@ -1,4 +1,4 @@
-# PET-filament-maker
+# PET filament maker
 
 based on maker https://electronoobs.com/eng_arduino_tut174.php
 but have some additional features like:
@@ -9,6 +9,8 @@ but have some additional features like:
 5. deleted PID parameters configuration
 6. added counting length of filament maked (cm)
 7. forward motor steps = 1/16 and revers = 1/1
-8. and others
+8. and many others improvements based on actual device usage
 
 ![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230801_170722.jpg)
+
+# Stand with Ukraine! -> [United24](https://u24.gov.ua/)
