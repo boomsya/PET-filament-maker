@@ -159,7 +159,7 @@ void loop() {
     }
 
     if ((filament_ended_time == 0) || (Time - filament_ended_time < 43000)) {
-      filament_ended = 0; //говорим, что пока лента не закончилась в течении 43 сек после его реального окончания, чтобі хвостик проплавило больше
+      filament_ended = 0; //говорим, что пока лента не закончилась в течении 40 сек после его реального окончания, чтобі хвостик проплавило больше
     }
   }
   
@@ -180,15 +180,15 @@ void loop() {
     rotating_speed = round(rotating_speed/10)*10;
   } else {
     rotating_speed = 0;
-  }  
+  }
 
   //включена намотка + включен мотор + (лента закочилась или температура не достигла нужного значения) = віключаем мотор (проверка на то, что нужно греть или нет чуть віше)
-  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.93))){
+  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.94))){
     stepper_motor_activated = false;
   }
 
-  //достигла ли температура необходимого значения (минимум 93% от необходимого)
-  temperature_riched = (temperature_read >= set_temperature * 0.93);
+  //достигла ли температура необходимого значения (минимум 94% от необходимого)
+  temperature_riched = (temperature_read >= set_temperature * 0.94);
 
   //текущее состояние
   if (active_menu == 0) {
@@ -292,7 +292,10 @@ void loop() {
     if (motor_direction == 0) {  //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
       rotating_speed = -max_speed/3;
-    } else {
+    } else { //наматіваем
+      if ((rotating_speed > 0) and (cm >= 500)) { //каждіе 5м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
+        rotating_speed -= rotating_speed * floor(cm/500)*0.033;
+      }
       digitalWrite(microstep_pin, HIGH); //1/16 шага
     }
   } else {
