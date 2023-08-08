@@ -293,8 +293,8 @@ void loop() {
       digitalWrite(microstep_pin, LOW); //полній шаг
       rotating_speed = -max_speed/3;
     } else { //наматіваем
-      if ((rotating_speed > 0) and (cm >= 500)) { //каждіе 5м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
-        rotating_speed -= rotating_speed * floor(cm/500)*0.033;
+      if ((rotating_speed > 0) and (cm >= 600)) { //каждіе 6м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
+        rotating_speed -= rotating_speed * floor(cm/600)*0.033;
       }
       digitalWrite(microstep_pin, HIGH); //1/16 шага
     }
