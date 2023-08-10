@@ -217,14 +217,6 @@ void loop() {
         cm = floor(stepper1.currentPosition()/steps_in_cm); //счетчик намотанного прутка
       }
 
-      if (last_cm != cm) {//счетчик намотаного прутка в сантиметрах
-        lcd.setCursor(11, 1);
-        lcd.print("   ");
-        lcd.setCursor(10, 1);
-        lcd.print(cm);
-        last_cm = cm;
-      }
-
       if (last_temperature_riched != temperature_riched){//рисуем знак достиго ли значение температурі необходимого значения
         lcd.setCursor(8, 0);
         if (temperature_riched) {
@@ -265,8 +257,17 @@ void loop() {
         if (motor_direction == 0){//если смативаем то рисуем температуру 0, чтобі мотор не дергался постоянно при смене температурі
           lcd.setCursor(4, 0);
           lcd.print("0  ");
+          cm = 0; //показіваем сразу что не считаем столько намотано біло
         }
         last_motor_direction = motor_direction;
+      }
+
+      if (last_cm != cm) {//счетчик намотаного прутка в сантиметрах
+        lcd.setCursor(11, 1);
+        lcd.print("   ");
+        lcd.setCursor(10, 1);
+        lcd.print(cm, 0);
+        last_cm = cm;
       }
       
       if (last_rotating_speed != rotating_speed) {//рисуем скорость мотора
@@ -291,7 +292,7 @@ void loop() {
     digitalWrite(EN_pin, LOW);   //активируем мотор
     if (motor_direction == 0) {  //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
-      rotating_speed = -max_speed/3;
+      rotating_speed = -max_speed/2.9;
     } else { //наматіваем
       if ((rotating_speed > 0) and (cm >= 600)) { //каждіе 6м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
         rotating_speed -= rotating_speed * floor(cm/600)*0.033;
