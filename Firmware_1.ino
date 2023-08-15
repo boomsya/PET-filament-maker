@@ -266,7 +266,7 @@ void loop() {
         lcd.setCursor(11, 1);
         lcd.print("   ");
         lcd.setCursor(10, 1);
-        lcd.print(cm, 0);
+        lcd.print(cm);
         last_cm = cm;
       }
       
@@ -292,7 +292,7 @@ void loop() {
     digitalWrite(EN_pin, LOW);   //активируем мотор
     if (motor_direction == 0) {  //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
-      rotating_speed = -max_speed/2.9;
+      rotating_speed = -max_speed/2.8;
     } else { //наматіваем
       if ((rotating_speed > 0) and (cm >= 600)) { //каждіе 6м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
         rotating_speed -= rotating_speed * floor(cm/600)*0.033;
