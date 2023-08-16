@@ -72,7 +72,7 @@ long cm = 0;
 long last_cm = -1;
 #define steps_in_cm 1357
 
-GyverPID regulator(1, 1, 1.5, 10);
+GyverPID regulator(1, 1, 1, 50);
 
 void setup() {
   pinMode(EN_pin, OUTPUT);//пин управления вкл-вікл мотор
