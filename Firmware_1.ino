@@ -183,12 +183,12 @@ void loop() {
   }
 
   //включена намотка + включен мотор + (лента закочилась или температура не достигла нужного значения) = віключаем мотор (проверка на то, что нужно греть или нет чуть віше)
-  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.94))){
+  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.93))){
     stepper_motor_activated = false;
   }
 
-  //достигла ли температура необходимого значения (минимум 94% от необходимого)
-  temperature_riched = (temperature_read >= set_temperature * 0.94);
+  //достигла ли температура необходимого значения (минимум 93% от необходимого)
+  temperature_riched = (temperature_read >= set_temperature * 0.93);
 
   //текущее состояние
   if (active_menu == 0) {
