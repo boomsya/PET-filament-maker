@@ -17,4 +17,6 @@ At now firmware works at Arduino Nano (atmega168) and takes 95% of avaliable spa
 
 ![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230801_170722.jpg)
 
+![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230823_114803.jpg)
+
 # Stand with Ukraine! -> [United24](https://u24.gov.ua/)
