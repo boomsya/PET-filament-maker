@@ -1,6 +1,6 @@
 # Bottle PET filament maker for 3D printers
 
-based on maker https://electronoobs.com/eng_arduino_tut174.php
+based on maker https://electronoobs.com/eng_arduino_tut174.php (really think it is not works)
 but have some additional features like:
 1. added potentiometer to speed regulation
 2. forward/reverse direction of motor
