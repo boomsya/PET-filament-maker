@@ -134,7 +134,10 @@ void loop() {
     act_motor_btn_state = false;
     stepper_motor_activated = !stepper_motor_activated;
     if (stepper_motor_activated) { //только что включили мотор
-      if (last_stepper_motor_activated == false){
+      if (filament_ended == 1) { 
+        stepper_motor_activated = 0; //если нет прутка - не стартуем
+      } 
+      if ((stepper_motor_activated == true) && (last_stepper_motor_activated == false)){ //только что включили мотор
         stepper1.setCurrentPosition(0);
         cm = 0;
         last_cm = -1;
