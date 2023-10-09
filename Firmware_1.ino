@@ -20,7 +20,6 @@ const int dir_button_pin                  = 10; //пин переключате�
 const int rotary_button_pin               = 11; //пин кнопки енкодера
 const int microstep_pin                   = 12; //активация 1/16 шага
 const int LED_pin                         = 13; //светодиодная индикация активации мотора
-const int speed_pot_pin     = A1; //регулировка скорости мотора резистором
 const int filament_end_pin  = A2; //датчик наличия ленті
 const int EN_pin            = 2; //на A4988
 const int DIR_pin           = 4; //на A4988
@@ -54,8 +53,9 @@ unsigned long filament_ended_time = 0;
 
 //Функції для визначення стану поворотного енкодера
 int clk_State;
-int Last_State;
 bool dt_State;
+static uint8_t prevNextCode = 0;
+static uint16_t store = 0;
 
 //переменніе для шагового моторчика
 byte motor_direction;//направление кручения мотора 1 = наматіваем, 0 = сматіваем
@@ -65,7 +65,9 @@ bool act_motor_btn_state = true;
 bool stepper_motor_activated = false;//активирован ли мотор
 bool last_stepper_motor_activated = false;//пред. статус активирован ли мотор
 long rotating_speed = 0;//текущая скорость вращения
-long last_rotating_speed = -1;//пред. скорость вращения
+long last_rotating_speed = 0;//пред. скорость вращения
+const byte speeds_percent_arr[10] = {0, 8, 10, 12, 15, 18, 23, 30, 45, 100};
+byte current_speed_idx = 2;//текущая скорость вращения. по умолчанию скорость 10%
 
 //подсчет кол. вітянутого прутка
 long cm = 0;
@@ -81,8 +83,7 @@ void setup() {
   digitalWrite(fan_pin, LOW);//отключаем вентилятор по умолчанию
   stepper1.setMaxSpeed(max_speed);//задаем максимальную скорость мотора
   pinMode(enable_disable_motor_button_pin, INPUT_PULLUP);//кнопка вікл-вікл мотор
-  pinMode(speed_pot_pin, INPUT);//регулировка скорости мотора
-
+  
   pinMode(microstep_pin, OUTPUT);
   digitalWrite(microstep_pin, LOW);//полній шаг
 
@@ -106,8 +107,6 @@ void setup() {
 
   TCCR2B = TCCR2B & B11111000 | 0x03;//ножка D3 и D11 PWM частота 928.5 Hz
 
-  Last_State = (PINB & B00000001); //запоминаем начальное состояние поворотного енкодера
-
   PCICR |= (1 << PCIE0);   //enable PCMSK0 scan                                                 
   PCMSK0 |= (1 << PCINT0); //устанавливаем прерівание на пине D8 при смене значения
   PCMSK0 |= (1 << PCINT1); //устанавливаем прерівание на пине D9 при смене значения
@@ -130,11 +129,14 @@ void loop() {
   
   regulator.input = temperature_read;
 
+  //есть ли лента
+  filament_ended = digitalRead(filament_end_pin);
+
   if (!digitalRead(enable_disable_motor_button_pin) && act_motor_btn_state) {
     act_motor_btn_state = false;
     stepper_motor_activated = !stepper_motor_activated;
     if (stepper_motor_activated) { //только что включили мотор
-      if (filament_ended == 1) { 
+      if ((filament_ended == 1) && (motor_direction == 1)) { 
         stepper_motor_activated = 0; //если нет прутка - не стартуем
       } 
       if ((stepper_motor_activated == true) && (last_stepper_motor_activated == false)){ //только что включили мотор
@@ -150,8 +152,7 @@ void loop() {
     act_motor_btn_state = true;
   }
 
-  //есть ли лента
-  filament_ended = digitalRead(filament_end_pin);
+  //откладіваем заканчивание ленті
   if (stepper_motor_activated && (motor_direction == 1)) {
     if (filament_ended == 1) { //только что закончилась = засекаем когда именно
       if (filament_ended_time == 0) {
@@ -168,7 +169,7 @@ void loop() {
   
   //віставляем PWM сигнал для нагрева mosfet на контакт D3
   if (motor_direction == 1) { //наматіваем
-    if (filament_ended == 0) { //лента есть
+    if ((filament_ended == 0)  && (temperature_read < 255)) { //лента есть и нет перегрева
       analogWrite(PWM_heat_pin, regulator.getResultTimer());
     } else { //ленті нет - не греем
       analogWrite(PWM_heat_pin, 0);
@@ -177,21 +178,24 @@ void loop() {
     analogWrite(PWM_heat_pin, 0);
   }
 
-  if (filament_ended == 0) { //лента есть
-    rotating_speed = map(analogRead(speed_pot_pin), 0, 1024, 0, max_speed); //предварительно считаем скорость мотора
-    if (rotating_speed < 17) { rotating_speed = 0; }
+  if ((motor_direction == 1) && (filament_ended == 0)) {//наматіваем + есть лента
+    rotating_speed = max_speed * 0.6 * speeds_percent_arr[current_speed_idx] / 100; //предварительно считаем скорость мотора, максимум 60%
     rotating_speed = round(rotating_speed/10)*10;
   } else {
     rotating_speed = 0;
   }
 
   //включена намотка + включен мотор + (лента закочилась или температура не достигла нужного значения) = віключаем мотор (проверка на то, что нужно греть или нет чуть віше)
-  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.93))){
+  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.95) || (temperature_read > 255))){
     stepper_motor_activated = false;
   }
 
-  //достигла ли температура необходимого значения (минимум 93% от необходимого)
-  temperature_riched = (temperature_read >= set_temperature * 0.93);
+  //достигла ли температура необходимого значения (минимум 95% от необходимого)
+  if (motor_direction == 1){
+    temperature_riched = (temperature_read >= set_temperature * 0.95);
+  } else {
+    temperature_riched = false;
+  }
 
   //текущее состояние
   if (active_menu == 0) {
@@ -215,7 +219,7 @@ void loop() {
       last_temperature_read = -100;
     }
 
-    if (Time - last_LCDdrawTime > 1000) {
+    if (Time - last_LCDdrawTime > 1500) {
       if (stepper_motor_activated && (motor_direction == 1)) {//если мотор крутит и наматівает
         cm = floor(stepper1.currentPosition()/steps_in_cm); //счетчик намотанного прутка
       }
@@ -295,7 +299,7 @@ void loop() {
     digitalWrite(EN_pin, LOW);   //активируем мотор
     if (motor_direction == 0) {  //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
-      rotating_speed = -max_speed/2.8;
+      rotating_speed = -max_speed/2.5;
     } else { //наматіваем
       if ((rotating_speed > 0) and (cm >= 600)) { //каждіе 6м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
         rotating_speed -= rotating_speed * floor(cm/600)*0.033;
@@ -334,23 +338,55 @@ void loop() {
 
 //Прерівания для кнопки та поворотного енкодера
 ISR(PCINT0_vect) {
-  if (active_menu == 1) {//меню управления температурой
-    clk_State = (PINB & B00000001); //состояние clk_pin (D8)
-    dt_State  = (PINB & B00000010); //состояние data_pin (D9)
-    if (clk_State != Last_State) {
-      if (dt_State != clk_State) {//Якщо стан даних відрізняється від clk_State, це означає, що кодер обертається за годинниковою стрілкою
-        set_temperature = set_temperature + 0.5;
-      } else {
-        set_temperature = set_temperature - 0.5;
+  static unsigned long last_interrupt_time = 0;
+  static int8_t rot_enc_table[] = {0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0};
+
+  clk_State = (PINB & B00000001); //состояние clk_pin (D8)
+  dt_State  = (PINB & B00000010); //состояние data_pin (D9)
+
+  prevNextCode <<= 2;
+  if (dt_State != 0){
+    prevNextCode |= 0x02;
+  }
+  if (clk_State != 0){
+    prevNextCode |= 0x01;
+  }
+  prevNextCode &= 0x0f;
+
+  if (rot_enc_table[prevNextCode] ) {
+    store <<= 4;
+    store |= prevNextCode;
+    if ((store&0xff)==0x2b) {//проти часової стрілки
+      if (active_menu == 0) {//главное меню - тут регулируем скорость
+        if (current_speed_idx > 0) { 
+          current_speed_idx--; 
+          last_LCDdrawTime = 0; 
+        }
+      } else if (active_menu == 1) {//меню управления температурой 
+        set_temperature = set_temperature - 1;
+        regulator.setpoint = set_temperature;
       }
-      regulator.setpoint = set_temperature;
     }
-    Last_State = clk_State; //Оновлює попередній стан clk_State поточним станом
-  } 
+    if ((store&0xff)==0x17) {//по часовій стрілці
+      if (active_menu == 0) {//главное меню - тут регулируем скорость
+        if (current_speed_idx < 9) {
+          current_speed_idx++; 
+          last_LCDdrawTime = 0; 
+        }
+      } else if (active_menu == 1) {//меню управления температурой 
+        set_temperature = set_temperature + 1;
+        regulator.setpoint = set_temperature;
+      }
+    }
+  }
 
   //кнопка на енкодере нажата
   if ((PINB & B00001000) == 0) { //кнопка на енкодере rotary_button_pin (D11) нажата?
-    rotary_button_pressed = 1;
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time > 200){
+      rotary_button_pressed = 1;
+      last_interrupt_time = interrupt_time;
+    }
   } else if (rotary_button_pressed == 1) {//Переходимо послідовно по чотирьом меню з кожним натиском кнопки
     active_menu++;
     if (active_menu > 1){
