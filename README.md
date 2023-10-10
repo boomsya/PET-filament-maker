@@ -16,7 +16,8 @@ but have some additional features like:
 12. rotary encoder more and more stable controlling when rotating
 13. emergency stop motor when heater temperature more than 255c and if heater temperature more than 255 - heating is disabled
 
-At now firmware works at Arduino Nano (atmega168) and takes 98% of avaliable space.
+At now firmware works at Arduino Nano (atmega168) and takes 98% of avaliable space. 
+Used PSU 250W.
 
 ![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230801_170722.jpg)
 
