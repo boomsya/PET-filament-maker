@@ -12,12 +12,14 @@ but have some additional features like:
 8. motor activated only when temperature is >= 94% of target
 9. motor speed decreasing -3.3% every 6 meters of filament maked (my bobin inner diamenter is 10.5cm and every layer of filament is +3.5mm and this leads to increasing real speed of winding +3.3%)
 10. and many others improvements based on actual device usage
-11. last commit (v1.8) remove potentiometer (now speed controlling with rotary)
-12. rotary encoder more and more stable controlling when rotating
-13. emergency stop motor when heater temperature more than 255c and if heater temperature more than 255 - heating is disabled
+11. v1.8: remove potentiometer (now speed controlling with rotary)
+12. v1.8: rotary encoder more and more stable controlling when rotating
+13. v1.8: emergency stop motor when heater temperature more than 255c and if heater temperature more than 255 - heating is disabled
+14. v1.9: added filter to temperature sensor - less noise in measurement
+15. v1.9: much much better PID parameters for 40W 12V heater. Setpoint = 222C and temperature bouncing in range 220...228C
 
-At now firmware works at Arduino Nano (atmega168) and takes 98% of avaliable space. 
-Used PSU 250W.
+At now firmware works at Arduino Nano (atmega168) and takes 99% of avaliable space. 
+Used cheap PSU 250W.
 
 ![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230801_170722.jpg)
 
