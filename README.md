@@ -12,7 +12,7 @@ but have some additional features like:
 8. motor activated only when temperature is >= 94% of target
 9. motor speed decreasing -3.3% every 6 meters of filament maked (my bobin inner diamenter is 10.5cm and every layer of filament is +3.5mm and this leads to increasing real speed of winding +3.3%)
 10. and many others improvements based on actual device usage
-11. last commit remove potentiometer (now speed controlling with rotary)
+11. last commit (v1.8) remove potentiometer (now speed controlling with rotary)
 12. rotary encoder more and more stable controlling when rotating
 13. emergency stop motor when heater temperature more than 255c and if heater temperature more than 255 - heating is disabled
 
