@@ -1,4 +1,5 @@
 #include "GyverPID.h" //установить либу ByverPID by AlexGyver
+#include "GyverFilters.h" //установить лібу GyverFilters by AlexGyver
 
 //настройка екранчика
 #include <Wire.h> 
@@ -34,6 +35,8 @@ thermistor therm1(A0, 0); //подключить термистор на нож�
 AccelStepper stepper1(1, STEP_pin, DIR_pin); // (Type of driver: with 2 pins, STEP, DIR)
 
 //змінні температурі
+GyverPID regulator(1, 256, 1.4, 10);
+GFilterRA filtered_temperature; //фильтр
 float set_temperature = 222; //Значення температури за замовчуванням. Залиште 0 і керуйте ним за допомогою поворотного енкодера
 float temperature_read = 0;//текущая считанная температура
 float last_temperature_read = -100;//пред. считанная температура
@@ -53,7 +56,7 @@ unsigned long filament_ended_time = 0;
 
 //Функції для визначення стану поворотного енкодера
 int clk_State;
-bool dt_State;
+int dt_State;
 static uint8_t prevNextCode = 0;
 static uint16_t store = 0;
 
@@ -74,8 +77,6 @@ long cm = 0;
 long last_cm = -1;
 #define steps_in_cm 1357
 
-GyverPID regulator(1, 1, 1, 10);
-
 void setup() {
   pinMode(EN_pin, OUTPUT);//пин управления вкл-вікл мотор
   digitalWrite(EN_pin, HIGH);//отключаем мотор по умолчанию
@@ -93,6 +94,9 @@ void setup() {
   pinMode(PWM_heat_pin, OUTPUT);
   analogWrite(PWM_heat_pin, 0);
 
+  filtered_temperature.setCoef(0.2);
+  filtered_temperature.setStep(10);
+
   pinMode(dir_button_pin, INPUT_PULLUP);//переключатель направления вращения мотора 
   motor_direction = digitalRead(dir_button_pin);
   last_motor_direction = 1 - motor_direction;
@@ -106,6 +110,9 @@ void setup() {
   last_filament_ended = 1 - filament_ended;
 
   TCCR2B = TCCR2B & B11111000 | 0x03;//ножка D3 и D11 PWM частота 928.5 Hz
+
+  clk_State = (PINB & B00000001); //запоминаем начальное состояние поворотного енкодера
+  dt_State  = (PINB & B00000010); //запоминаем начальное состояние поворотного енкодера
 
   PCICR |= (1 << PCIE0);   //enable PCMSK0 scan                                                 
   PCMSK0 |= (1 << PCINT0); //устанавливаем прерівание на пине D8 при смене значения
@@ -125,7 +132,7 @@ void loop() {
   Time = millis(); //поточний час
 
   //Спочатку читаємо значення температури
-  temperature_read = therm1.analog2temp(); //считіваем температуру
+  temperature_read = filtered_temperature.filteredTime(therm1.analog2temp()); //считіваем температуру
   
   regulator.input = temperature_read;
 
