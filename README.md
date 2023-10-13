@@ -16,7 +16,7 @@ but have some additional features like:
 12. v1.8: rotary encoder more and more stable controlling when rotating
 13. v1.8: emergency stop motor when heater temperature more than 255c and if heater temperature more than 255 - heating is disabled
 14. v1.9: added filter to temperature sensor - less noise in measurement
-15. v1.9: much much better PID parameters for 40W 12V heater. Setpoint = 222C and temperature bouncing in range 220...228C
+15. v1.9: much much better PID parameters for 40W 12V heater. Setpoint = 222C and temperature bouncing in range 220...227C
 
 At now firmware works at Arduino Nano (atmega168) and takes 99% of avaliable space. 
 Used cheap PSU 250W.
