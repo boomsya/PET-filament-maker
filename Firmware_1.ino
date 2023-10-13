@@ -186,7 +186,7 @@ void loop() {
   }
 
   if ((motor_direction == 1) && (filament_ended == 0)) {//наматіваем + есть лента
-    rotating_speed = max_speed * 0.6 * speeds_percent_arr[current_speed_idx] / 100; //предварительно считаем скорость мотора, максимум 60%
+    rotating_speed = max_speed * speeds_percent_arr[current_speed_idx] / 100; //предварительно считаем скорость мотора, максимум 60%
     rotating_speed = round(rotating_speed/10)*10;
   } else {
     rotating_speed = 0;
@@ -306,7 +306,7 @@ void loop() {
     digitalWrite(EN_pin, LOW);   //активируем мотор
     if (motor_direction == 0) {  //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
-      rotating_speed = -max_speed/2.5;
+      rotating_speed = -max_speed/2.4;
     } else { //наматіваем
       if ((rotating_speed > 0) and (cm >= 600)) { //каждіе 6м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
         rotating_speed -= rotating_speed * floor(cm/600)*0.033;
