@@ -63,7 +63,7 @@ static uint16_t store = 0;
 //переменніе для шагового моторчика
 byte motor_direction;//направление кручения мотора 1 = наматіваем, 0 = сматіваем
 byte last_motor_direction;//пред. направление кручения мотора
-#define max_speed 1024 //максимальная скорость
+#define max_speed 1000 //максимальная скорость
 bool act_motor_btn_state = true;
 bool stepper_motor_activated = false;//активирован ли мотор
 bool last_stepper_motor_activated = false;//пред. статус активирован ли мотор
@@ -187,7 +187,6 @@ void loop() {
 
   if ((motor_direction == 1) && (filament_ended == 0)) {//наматіваем + есть лента
     rotating_speed = max_speed * speeds_percent_arr[current_speed_idx] / 100; //предварительно считаем скорость мотора, максимум 60%
-    rotating_speed = round(rotating_speed/10)*10;
   } else {
     rotating_speed = 0;
   }
@@ -290,8 +289,7 @@ void loop() {
         lcd.setCursor(4, 1);
         
         float percentage;
-        const float hundred = 100.0;
-        percentage = round(hundred * rotating_speed / max_speed);
+        percentage = round(rotating_speed * 100.0 / max_speed);
         lcd.print(percentage, 0);
         lcd.print('%');
         last_rotating_speed = rotating_speed;
@@ -308,9 +306,6 @@ void loop() {
       digitalWrite(microstep_pin, LOW); //полній шаг
       rotating_speed = -max_speed/2.4;
     } else { //наматіваем
-      if ((rotating_speed > 0) and (cm >= 600)) { //каждіе 6м уменьшаем скорость на 3.3% так как увеличивается диаметр намотанного прутка на бабине
-        rotating_speed -= rotating_speed * floor(cm/600)*0.033;
-      }
       digitalWrite(microstep_pin, HIGH); //1/16 шага
     }
   } else {
