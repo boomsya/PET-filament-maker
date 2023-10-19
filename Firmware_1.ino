@@ -63,19 +63,30 @@ static uint16_t store = 0;
 //переменніе для шагового моторчика
 byte motor_direction;//направление кручения мотора 1 = наматіваем, 0 = сматіваем
 byte last_motor_direction;//пред. направление кручения мотора
-#define max_speed 1000 //максимальная скорость
+
+#ifndef _LGT8F328P_SPEC_H_
+  #define max_speed 1000 //максимальна швидкість
+#endif
+#ifdef _LGT8F328P_SPEC_H_
+  #define max_speed 3000 //максимальна швидкість
+#endif
 bool act_motor_btn_state = true;
 bool stepper_motor_activated = false;//активирован ли мотор
 bool last_stepper_motor_activated = false;//пред. статус активирован ли мотор
-long rotating_speed = 0;//текущая скорость вращения
-long last_rotating_speed = 0;//пред. скорость вращения
+float rotating_speed = 0;//текущая скорость вращения
+float last_rotating_speed = 0;//пред. скорость вращения
 const byte speeds_percent_arr[10] = {0, 8, 10, 12, 15, 18, 23, 30, 45, 100};
 byte current_speed_idx = 2;//текущая скорость вращения. по умолчанию скорость 10%
 
 //подсчет кол. вітянутого прутка
 long cm = 0;
 long last_cm = -1;
-#define steps_in_cm 1357
+#ifndef _LGT8F328P_SPEC_H_
+  #define steps_in_cm 1357
+#endif
+#ifdef _LGT8F328P_SPEC_H_
+  #define steps_in_cm 2514
+#endif
 
 void setup() {
   pinMode(EN_pin, OUTPUT);//пин управления вкл-вікл мотор
@@ -186,7 +197,7 @@ void loop() {
   }
 
   if ((motor_direction == 1) && (filament_ended == 0)) {//наматіваем + есть лента
-    rotating_speed = max_speed * speeds_percent_arr[current_speed_idx] / 100; //предварительно считаем скорость мотора, максимум 60%
+    rotating_speed = round(max_speed * speeds_percent_arr[current_speed_idx] / 100); //предварительно считаем скорость мотора, максимум 60%
   } else {
     rotating_speed = 0;
   }
@@ -304,7 +315,7 @@ void loop() {
     digitalWrite(EN_pin, LOW);   //активируем мотор
     if (motor_direction == 0) {  //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
-      rotating_speed = -max_speed/2.4;
+      rotating_speed = -max_speed/2.25;
     } else { //наматіваем
       digitalWrite(microstep_pin, HIGH); //1/16 шага
     }
