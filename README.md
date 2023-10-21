@@ -18,6 +18,7 @@ but have some additional features like:
 14. v1.9: much much better PID parameters for 40W 12V heater. Setpoint = 222C and temperature bouncing in range 220...227C
 15. v1.10: limit of scace program :( some code deleted
 16. v1.10: fix percentage display
+17. v.1.11: modify tempertaure filter to Median algorythm
 
 At now firmware works at Arduino Nano (atmega168) and takes 99% of avaliable space. 
 Used cheap PSU 250W.
