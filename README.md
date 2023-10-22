@@ -19,7 +19,7 @@ but have some additional features like:
 15. v1.10: limit of scace program :( some code deleted
 16. v1.10: fix percentage display
 17. v.1.11: modify tempertaure filter to Median algorythm
-18. v.1.12: I builded second machine on LGT8F328P chip (Chinese analog of ATMega328P) and mechanically some different so have some code modifications (_LGT8F328P_SPEC_H_)
+18. v.1.12: I builded second machine on LGT8F328P chip (Chinese analog of ATMega328P) and mechanically some different so have some code modifications (```_LGT8F328P_SPEC_H_```)
 19. v.1.12: some fixes
 
 At now firmware works at Arduino Nano (atmega168) and takes 99% of avaliable space. 
