@@ -45,11 +45,11 @@ bool temperature_riched = false; //достигла ли температура 
 bool last_temperature_riched = true; //пред. статус достигла ли температура допустимого значения
 
 unsigned long Time, last_LCDdrawTime = 0;
-int rotary_button_pressed = 0;//кнопка нажата
-int active_menu = 0;//меню активировано
+int rotary_button_pressed = 0;//кнопка натиснута
+int active_menu = 0;//меню активовано
 bool menu_changed = true;//признак что сменилось меню, чтобі отрисовать его
 
-//змінні закінчення ленті
+//змінні закінчення стрічки
 int filament_ended = 1;//признак что лента закончилась: 1 = ленті нету, 0 = лента есть
 int last_filament_ended = 0;//пред. статус заканчивания ленті
 unsigned long filament_ended_time = 0;
@@ -60,23 +60,24 @@ int dt_State;
 static uint8_t prevNextCode = 0;
 static uint16_t store = 0;
 
-//переменніе для шагового моторчика
+//змінні для крокового мотора
 byte motor_direction;//направление кручения мотора 1 = наматіваем, 0 = сматіваем
 byte last_motor_direction;//пред. направление кручения мотора
 
 #ifndef _LGT8F328P_SPEC_H_
   #define max_speed 1000.0 //максимальна швидкість
+  const float speeds_percent_arr[7] = {0.0, 6.0, 8.0, 10.0, 16.0, 24.0, 48.0};
 #endif
 #ifdef _LGT8F328P_SPEC_H_
   #define max_speed 500.0 //максимальна швидкість
+  const float speeds_percent_arr[6] = {0.0, 2.0, 4.0, 6.0, 10.0, 18.0};
 #endif
 bool act_motor_btn_state = true;
-bool stepper_motor_activated = false;//активирован ли мотор
+bool stepper_motor_activated = false;//чи активовано мотор
 bool last_stepper_motor_activated = false;//пред. статус активирован ли мотор
-float rotating_speed = 0;//текущая скорость вращения
+float rotating_speed = 0;//поточна швидкість обертання
 float last_rotating_speed = 0;//пред. скорость вращения
-const float speeds_percent_arr[7] = {0.0, 6.0, 8.0, 10.0, 16.0, 24.0, 48.0};
-byte current_speed_idx = 3;//текущая скорость вращения. по умолчанию скорость 10%
+byte current_speed_idx = 3;//текущая скорость вращения по умолчанию
 
 //подсчет кол. вітянутого прутка
 long cm = 0;
@@ -308,17 +309,15 @@ void loop() {
     digitalWrite(LED_pin, HIGH); //мотор активен = светодиод светит
     digitalWrite(EN_pin, LOW); //активируем мотор
     if (motor_direction == 0) { //сматіваем
+      digitalWrite(microstep_pin, LOW); //полній шаг
       #ifndef _LGT8F328P_SPEC_H_
-        digitalWrite(microstep_pin, LOW); //полній шаг
         rotating_speed = -max_speed/2.25;
       #endif
       #ifdef _LGT8F328P_SPEC_H_
         rotating_speed = -max_speed;
       #endif
     } else { //наматіваем
-      #ifndef _LGT8F328P_SPEC_H_
         digitalWrite(microstep_pin, HIGH); //1/16 шага
-      #endif
     }
   } else {
     digitalWrite(EN_pin, HIGH); //деактивируем мотор
@@ -382,12 +381,20 @@ ISR(PCINT0_vect) {
     }
     if ((store&0xff)==0x17) {//по часовій стрілці
       if (active_menu == 0) {//главное меню - тут регулируем скорость
-        if (current_speed_idx < 6) {
-          current_speed_idx++; 
-          last_LCDdrawTime = 0; 
-        }
+        #ifndef _LGT8F328P_SPEC_H_
+          if (current_speed_idx < 6) {
+            current_speed_idx++; 
+            last_LCDdrawTime = 0; 
+          }
+        #endif
+        #ifdef _LGT8F328P_SPEC_H_
+          if (current_speed_idx < 5) {
+            current_speed_idx++; 
+            last_LCDdrawTime = 0; 
+          }
+        #endif
       } else if (active_menu == 1) {//меню управления температурой 
-        if (set_temperature <= 249) { set_temperature += 1; }
+        if (set_temperature <= 244) { set_temperature += 1; }
         regulator.setpoint = set_temperature;
       }
     }
