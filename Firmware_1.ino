@@ -1,5 +1,4 @@
-#include "GyverPID.h" //установить либу ByverPID by AlexGyver
-#include "GyverFilters.h" //установить лібу GyverFilters by AlexGyver
+#include <Bounce2.h>
 
 //настройка екранчика
 #include <Wire.h> 
@@ -35,12 +34,14 @@ thermistor therm1(A0, 0); //подключить термистор на нож�
 AccelStepper stepper1(1, STEP_pin, DIR_pin); // (Type of driver: with 2 pins, STEP, DIR)
 
 //змінні температурі
+#include "GyverPID.h" //установить либу ByverPID by AlexGyver
 GyverPID regulator(1, 256, 1.4, 10);
+#include "GyverFilters.h" //установить лібу GyverFilters by AlexGyver
 GMedian<10, int> filtered_temperature; //фильтр
-float set_temperature = 222; //Значення температури за замовчуванням. Залиште 0 і керуйте ним за допомогою поворотного енкодера
+int set_temperature = 222; //Значення температури за замовчуванням. Залиште 0 і керуйте ним за допомогою поворотного енкодера
 float temperature_read = 0;//текущая считанная температура
 float last_temperature_read = -100;//пред. считанная температура
-float last_set_temperature = 0;
+int last_set_temperature = 0;
 bool temperature_riched = false; //достигла ли температура допустимого значения
 bool last_temperature_riched = true; //пред. статус достигла ли температура допустимого значения
 
@@ -64,15 +65,16 @@ static uint16_t store = 0;
 byte motor_direction;//направление кручения мотора 1 = наматіваем, 0 = сматіваем
 byte last_motor_direction;//пред. направление кручения мотора
 
-#ifndef _LGT8F328P_SPEC_H_
-  #define max_speed 1000.0 //максимальна швидкість
+#define max_speed 1000.0 //максимальна швидкість
+
+#ifndef _LGT8F328P_SPEC_H_  
   const float speeds_percent_arr[7] = {0.0, 6.0, 8.0, 10.0, 16.0, 24.0, 48.0};
 #endif
 #ifdef _LGT8F328P_SPEC_H_
-  #define max_speed 500.0 //максимальна швидкість
   const float speeds_percent_arr[6] = {0.0, 2.0, 4.0, 6.0, 10.0, 18.0};
 #endif
-bool act_motor_btn_state = true;
+
+Bounce2::Button start_stop_button = Bounce2::Button();
 bool stepper_motor_activated = false;//чи активовано мотор
 bool last_stepper_motor_activated = false;//пред. статус активирован ли мотор
 float rotating_speed = 0;//поточна швидкість обертання
@@ -86,7 +88,7 @@ long last_cm = -1;
   #define steps_in_cm 1357
 #endif
 #ifdef _LGT8F328P_SPEC_H_
-  #define steps_in_cm 2514
+  #define steps_in_cm 629
 #endif
 
 void setup() {
@@ -95,7 +97,10 @@ void setup() {
   pinMode(fan_pin, OUTPUT);
   digitalWrite(fan_pin, LOW);//отключаем вентилятор по умолчанию
   stepper1.setMaxSpeed(max_speed);//задаем максимальную скорость мотора
-  pinMode(enable_disable_motor_button_pin, INPUT_PULLUP);//кнопка вікл-вікл мотор
+  //pinMode(enable_disable_motor_button_pin, INPUT_PULLUP);//кнопка вікл-вікл мотор
+  start_stop_button.attach(enable_disable_motor_button_pin, INPUT_PULLUP);
+  start_stop_button.interval(50);
+  start_stop_button.setPressedState(LOW);
   
   pinMode(microstep_pin, OUTPUT);
   digitalWrite(microstep_pin, LOW);//полній шаг
@@ -138,18 +143,17 @@ void setup() {
 }
 
 void loop() {
-  Time = millis(); //поточний час
-
   //Спочатку читаємо значення температури
   temperature_read = filtered_temperature.filtered(therm1.analog2temp()); //считіваем температуру
-  
-  regulator.input = temperature_read;
 
   //есть ли лента
   filament_ended = digitalRead(filament_end_pin);
 
-  if (!digitalRead(enable_disable_motor_button_pin) && act_motor_btn_state) {
-    act_motor_btn_state = false;
+  Time = millis(); //поточний час
+
+  start_stop_button.update();
+
+  if (start_stop_button.pressed()) {//кнопка нажата
     stepper_motor_activated = !stepper_motor_activated;
     if (stepper_motor_activated) { //только что включили мотор
       if ((filament_ended == 1) && (motor_direction == 1)) { 
@@ -161,11 +165,9 @@ void loop() {
         last_cm = -1;
         last_stepper_motor_activated = true;
       }
-    } else {
+    } else { //только что віключили мотор
       last_stepper_motor_activated = false;
     }
-  } else if (digitalRead(enable_disable_motor_button_pin) && !act_motor_btn_state) {
-    act_motor_btn_state = true;
   }
 
   //откладіваем заканчивание ленті
@@ -178,37 +180,31 @@ void loop() {
       filament_ended_time = 0;
     }
 
-    if ((filament_ended_time == 0) || (Time - filament_ended_time < 43000)) {
+    if ((filament_ended_time == 0) || (Time - filament_ended_time < 44000)) {
       filament_ended = 0; //говорим, что пока лента не закончилась в течении 40 сек после его реального окончания, чтобі хвостик проплавило больше
     }
   }
   
   //віставляем PWM сигнал для нагрева mosfet на контакт D3
   if (motor_direction == 1) { //наматіваем
-    if ((filament_ended == 0) && (temperature_read < 255)) { //лента есть и нет перегрева
+    if ((filament_ended == 0) && (temperature_read < 255)) { //наматіваем + есть лента + нет перегрева
+      regulator.input = temperature_read;
       analogWrite(PWM_heat_pin, regulator.getResultTimer());
-    } else { //ленті нет - не греем
+      rotating_speed = max_speed * speeds_percent_arr[current_speed_idx] / 100.0; //предварительно считаем скорость мотора, максимум 60%
+    } else { //ленті нет, перегрев - не греем
       analogWrite(PWM_heat_pin, 0);
+      rotating_speed = 0;
+    }
+
+    //достигла ли температура необходимого значения (минимум 96% от необходимого)
+    temperature_riched = (temperature_read >= set_temperature * 0.96);
+
+    //включена намотка + включен мотор + (лента закочилась или температура не достигла нужного значения) = віключаем мотор (проверка на то, что нужно греть или нет чуть віше)
+    if (stepper_motor_activated && ((filament_ended == 1) || (temperature_read < set_temperature * 0.96) || (temperature_read >= 255))){
+      stepper_motor_activated = false;
     }
   } else { //когда сматіваем бабину - не греем
     analogWrite(PWM_heat_pin, 0);
-  }
-
-  if ((motor_direction == 1) && (filament_ended == 0)) { //наматіваем + есть лента
-    rotating_speed = max_speed * speeds_percent_arr[current_speed_idx] / 100.0; //предварительно считаем скорость мотора, максимум 60%
-  } else {
-    rotating_speed = 0;
-  }
-
-  //включена намотка + включен мотор + (лента закочилась или температура не достигла нужного значения) = віключаем мотор (проверка на то, что нужно греть или нет чуть віше)
-  if (stepper_motor_activated && (motor_direction == 1) && ((filament_ended == 1) || (temperature_read < set_temperature * 0.96) || (temperature_read > 255))){
-    stepper_motor_activated = false;
-  }
-
-  //достигла ли температура необходимого значения (минимум 96% от необходимого)
-  if (motor_direction == 1) {
-    temperature_riched = (temperature_read >= set_temperature * 0.96);
-  } else {
     temperature_riched = false;
   }
 
@@ -303,10 +299,21 @@ void loop() {
 
       last_LCDdrawTime = Time;
     }
+  } else if (active_menu == 1) { //меню настройка температурі
+    if (menu_changed || (set_temperature != last_set_temperature)) {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Set temperature");    
+      lcd.setCursor(0, 1);
+      lcd.print(set_temperature, 0);  
+      lcd.print("  ");
+      menu_changed = false;
+    }
+    last_set_temperature = set_temperature;
   }
 
-  if (stepper_motor_activated) {
-    digitalWrite(LED_pin, HIGH); //мотор активен = светодиод светит
+  if (stepper_motor_activated) {//мотор активен
+    digitalWrite(LED_pin, HIGH); //светодиод светит
     digitalWrite(EN_pin, LOW); //активируем мотор
     if (motor_direction == 0) { //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
@@ -319,33 +326,21 @@ void loop() {
     } else { //наматіваем
         digitalWrite(microstep_pin, HIGH); //1/16 шага
     }
+
+    if ((motor_direction == 1) && (filament_ended == 0)) {
+      digitalWrite(fan_pin, HIGH); //активируем вентилятор
+    } else {
+      digitalWrite(fan_pin, LOW); //деактивируем вентилятор
+    }
   } else {
     digitalWrite(EN_pin, HIGH); //деактивируем мотор
-    digitalWrite(LED_pin, LOW); //мотор не активен = светодиод потух
-    rotating_speed = 0;
-  }
-
-  if (stepper_motor_activated && (motor_direction == 1) && (filament_ended == 0)) {
-    digitalWrite(fan_pin, HIGH); //активируем вентилятор
-  } else {
     digitalWrite(fan_pin, LOW); //деактивируем вентилятор
+    digitalWrite(LED_pin, LOW); //светодиод вимкнено
+    rotating_speed = 0;
   }
 
   stepper1.setSpeed(rotating_speed);
   stepper1.runSpeed();
-
-  if (active_menu == 1) { //меню настройка температурі
-    if (menu_changed || (set_temperature != last_set_temperature)) {
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Set temperature");    
-      lcd.setCursor(0, 1);
-      lcd.print(set_temperature, 0);  
-      lcd.print("  ");
-      menu_changed = false;
-    }
-    last_set_temperature = set_temperature;
-  }
 }
 
 //Прерівания для кнопки та поворотного енкодера
@@ -407,7 +402,7 @@ ISR(PCINT0_vect) {
       rotary_button_pressed = 1;
       last_interrupt_time = interrupt_time;
     }
-  } else if (rotary_button_pressed == 1) { //Переходимо послідовно по чотирьом меню з кожним натиском кнопки
+  } else if (rotary_button_pressed == 1) { //Переходимо послідовно по двум меню з кожним натиском кнопки
     active_menu++;
     if (active_menu > 1) {
       active_menu = 0;
