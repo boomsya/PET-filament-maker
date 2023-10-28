@@ -67,12 +67,9 @@ byte last_motor_direction;//пред. направление кручения м
 
 #define max_speed 1000.0 //максимальна швидкість
 
-#ifndef _LGT8F328P_SPEC_H_  
-  const float speeds_percent_arr[7] = {0.0, 6.0, 8.0, 10.0, 16.0, 24.0, 48.0};
-#endif
-#ifdef _LGT8F328P_SPEC_H_
-  const float speeds_percent_arr[6] = {0.0, 2.0, 4.0, 6.0, 10.0, 18.0};
-#endif
+#define MACHINE2 //плавілка 2
+
+const float speeds_percent_arr[7] = {0.0, 6.0, 8.0, 10.0, 16.0, 24.0, 48.0};
 
 Bounce2::Button start_stop_button = Bounce2::Button();
 bool stepper_motor_activated = false;//чи активовано мотор
@@ -84,10 +81,10 @@ byte current_speed_idx = 3;//текущая скорость вращения п
 //подсчет кол. вітянутого прутка
 long cm = 0;
 long last_cm = -1;
-#ifndef _LGT8F328P_SPEC_H_
+#ifndef MACHINE2
   #define steps_in_cm 1357
 #endif
-#ifdef _LGT8F328P_SPEC_H_
+#ifdef MACHINE2
   #define steps_in_cm 629
 #endif
 
@@ -317,12 +314,7 @@ void loop() {
     digitalWrite(EN_pin, LOW); //активируем мотор
     if (motor_direction == 0) { //сматіваем
       digitalWrite(microstep_pin, LOW); //полній шаг
-      #ifndef _LGT8F328P_SPEC_H_
-        rotating_speed = -max_speed/2.25;
-      #endif
-      #ifdef _LGT8F328P_SPEC_H_
-        rotating_speed = -max_speed;
-      #endif
+      rotating_speed = -max_speed/2.25;
     } else { //наматіваем
         digitalWrite(microstep_pin, HIGH); //1/16 шага
     }
@@ -376,18 +368,10 @@ ISR(PCINT0_vect) {
     }
     if ((store&0xff)==0x17) {//по часовій стрілці
       if (active_menu == 0) {//главное меню - тут регулируем скорость
-        #ifndef _LGT8F328P_SPEC_H_
-          if (current_speed_idx < 6) {
-            current_speed_idx++; 
-            last_LCDdrawTime = 0; 
-          }
-        #endif
-        #ifdef _LGT8F328P_SPEC_H_
-          if (current_speed_idx < 5) {
-            current_speed_idx++; 
-            last_LCDdrawTime = 0; 
-          }
-        #endif
+        if (current_speed_idx < 6) {
+          current_speed_idx++; 
+          last_LCDdrawTime = 0; 
+        }
       } else if (active_menu == 1) {//меню управления температурой 
         if (set_temperature <= 244) { set_temperature += 1; }
         regulator.setpoint = set_temperature;
