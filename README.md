@@ -15,7 +15,7 @@ but have some additional features like:
 11. emergency stop motor when heater temperature more than 255c and if heater temperature more than 255 - heating is disabled
 12. added filter to temperature sensor - less noise in measurement
 13. much better PID parameters for 40W 12V heater. Setpoint = 222C and temperature bouncing in range 220...227C
-14. I builded second machine on LGT8F328P chip (Chinese analog of ATMega328P) and mechanically some different so have some code modifications (```_LGT8F328P_SPEC_H_```)
+14. I builded second machine and mechanically some different. So have some code modifications (```#define MACHINE2```)
 
 At now firmware works at Arduino Nano (atmega168) and takes 99% of avaliable space. 
 Used cheap PSU 250W.
