@@ -1,3 +1,5 @@
+//#define MACHINE2 //плавілка 2
+
 #include <Bounce2.h>
 
 //настройка екранчика
@@ -46,8 +48,8 @@ bool temperature_riched = false; //достигла ли температура 
 bool last_temperature_riched = true; //пред. статус достигла ли температура допустимого значения
 
 unsigned long Time, last_LCDdrawTime = 0;
-int rotary_button_pressed = 0;//кнопка натиснута
-int active_menu = 0;//меню активовано
+byte rotary_button_pressed = 0;//кнопка натиснута
+byte active_menu = 0;//меню активовано
 bool menu_changed = true;//признак что сменилось меню, чтобі отрисовать его
 
 //змінні закінчення стрічки
@@ -66,8 +68,6 @@ byte motor_direction;//направление кручения мотора 1 = 
 byte last_motor_direction;//пред. направление кручения мотора
 
 #define max_speed 1000.0 //максимальна швидкість
-
-#define MACHINE2 //плавілка 2
 
 const float speeds_percent_arr[7] = {0.0, 6.0, 8.0, 10.0, 16.0, 24.0, 48.0};
 
@@ -265,7 +265,7 @@ void loop() {
         lcd.print("  ");
         lcd.setCursor(11, 0);
         if ((motor_direction == 1) && (filament_ended == 0)) { //наматіваем + есть лента
-          lcd.print(set_temperature, 0);
+          lcd.print(set_temperature);
         } else { //когда сматіваем бабину - не греем
           lcd.print("0  ");
         }
