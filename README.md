@@ -20,7 +20,7 @@ but have some additional features like:
 At now firmware works at Arduino Nano (atmega168) and takes 99% of avaliable space. 
 Used cheap PSU 250W.
 
-![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230801_170722.jpg)
+![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/maker.jpg)
 
 ![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230823_114803.jpg)
 
