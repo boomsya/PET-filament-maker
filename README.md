@@ -24,4 +24,7 @@ Used cheap PSU 250W.
 
 ![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/20230823_114803.jpg)
 
+Result:
+![pet filament maker](https://github.com/boomsya/PET-filament-maker/blob/main/DSC_0013.JPG)
+
 # Stand with Ukraine! -> [United24](https://u24.gov.ua/)
