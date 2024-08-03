@@ -1,4 +1,4 @@
-//#define MACHINE2 //плавілка 2
+//#define MACHINE2 //плавілка 2 - та що з підсвіткою колеса намотки
 
 #include <Bounce2.h>
 
@@ -40,10 +40,10 @@ AccelStepper stepper1(1, STEP_pin, DIR_pin); // (Type of driver: with 2 pins, ST
 GyverPID regulator(1, 256, 1.4, 10);
 #include "GyverFilters.h" //установить лібу GyverFilters by AlexGyver
 GMedian<10, int> filtered_temperature; //фильтр
-int set_temperature = 222; //Значення температури за замовчуванням. Залиште 0 і керуйте ним за допомогою поворотного енкодера
+byte set_temperature = 222; //Значення температури за замовчуванням. Керуйте ним за допомогою поворотного енкодера
 float temperature_read = 0;//текущая считанная температура
 float last_temperature_read = -100;//пред. считанная температура
-int last_set_temperature = 0;
+byte last_set_temperature = 0;
 bool temperature_riched = false; //достигла ли температура допустимого значения
 bool last_temperature_riched = true; //пред. статус достигла ли температура допустимого значения
 
@@ -228,8 +228,8 @@ void loop() {
     }
 
     if (Time - last_LCDdrawTime > 1500) {
-      if (stepper_motor_activated && (motor_direction == 1)) { //если мотор крутит и наматівает
-        cm = floor(stepper1.currentPosition()/steps_in_cm); //счетчик намотанного прутка
+      if (stepper_motor_activated && (motor_direction == 1)) { //якщо мотор крутить і намотує
+        cm = floor(stepper1.currentPosition()/steps_in_cm); //лічильник намотаного прутка
       }
 
       if (last_temperature_riched != temperature_riched) { //рисуем знак достиго ли значение температурі необходимого значения
@@ -242,9 +242,9 @@ void loop() {
         last_temperature_riched = temperature_riched;
       }
 
-      if (last_filament_ended != filament_ended) {//рисуем закончилась ли лента
+      if (last_filament_ended != filament_ended) {//малюємо чи закінчилася стрічка
         lcd.setCursor(15, 0);
-        if (filament_ended == 1) { //лента закончилась
+        if (filament_ended == 1) { //стрічка закінчилася
           lcd.print('-');
         } else {
           lcd.print('+');
@@ -260,19 +260,20 @@ void loop() {
         last_temperature_read = round(temperature_read);
       }
 
-      if (last_motor_direction != motor_direction) { //рисуем температуру к которой стремится плавилка
+      if (last_motor_direction != motor_direction) { //малюємо температуру до якої прагне плавилка
         lcd.setCursor(12, 0);
         lcd.print("  ");
         lcd.setCursor(11, 0);
         if ((motor_direction == 1) && (filament_ended == 0)) { //наматіваем + есть лента
-          lcd.print(set_temperature);
+          char tmpstr[3];
+          lcd.print(itoa(set_temperature, tmpstr, 10));
         } else { //когда сматіваем бабину - не греем
           lcd.print("0  ");
         }
         if (motor_direction == 0){ //если смативаем то рисуем температуру 0, чтобі мотор не дергался постоянно при смене температурі
           lcd.setCursor(4, 0);
           lcd.print("0  ");
-          cm = 0; //показіваем сразу что не считаем столько намотано біло
+          cm = 0; //показуємо відразу що не рахуємо скільки намотано було
         }
         last_motor_direction = motor_direction;
       }
@@ -302,7 +303,8 @@ void loop() {
       lcd.setCursor(0, 0);
       lcd.print("Set temperature");    
       lcd.setCursor(0, 1);
-      lcd.print(set_temperature, 0);  
+      char tmpstr[3];
+      lcd.print(itoa(set_temperature, tmpstr, 10));
       lcd.print("  ");
       menu_changed = false;
     }
