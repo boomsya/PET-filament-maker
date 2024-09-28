@@ -162,7 +162,6 @@ void loop() {
         cm = 0;
         last_cm = -1;
         last_stepper_motor_activated = true;
-        filament_ended_time = 0;
       }
     } else { //только что віключили мотор
       last_stepper_motor_activated = false;
@@ -176,18 +175,20 @@ void loop() {
         if (filament_ended_time == 0) {
           filament_ended_time = Time;
         }
-
-        #ifndef MACHINE2
-        if (Time - filament_ended_time < 44000) {
-          filament_ended = 0; //говорим, что пока лента не закончилась в течении 44 сек после его реального окончания, чтобі хвостик проплавило больше
-        }
-        #endif
-        #ifdef MACHINE2
-        if (Time - filament_ended_time < 40000) {
-          filament_ended = 0; //говорим, что пока лента не закончилась в течении 41 сек после его реального окончания, чтобі хвостик проплавило больше
-        }
-        #endif
+      } else {
+        filament_ended_time = 0;
       }
+
+      #ifndef MACHINE2
+      if ((filament_ended_time == 0) || (Time - filament_ended_time < 44000)) {
+        filament_ended = 0; //говорим, что пока лента не закончилась в течении 40 сек после его реального окончания, чтобі хвостик проплавило больше
+      }
+      #endif
+      #ifdef MACHINE2
+      if ((filament_ended_time == 0) || (Time - filament_ended_time < 40000)) {
+        filament_ended = 0; //говорим, что пока лента не закончилась в течении 40 сек после его реального окончания, чтобі хвостик проплавило больше
+      }
+      #endif
     }
 
     //віставляем PWM сигнал для нагрева mosfet на контакт D3
@@ -328,7 +329,7 @@ void loop() {
       rotating_speed = -444;
       #endif
       #ifdef MACHINE2
-      rotating_speed = -325;//-469;
+      rotating_speed = -320;//-469;
       #endif
     } else { //наматіваем
       digitalWrite(microstep_pin, HIGH); //1/16 шага
